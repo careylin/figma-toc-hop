@@ -1,6 +1,6 @@
 {
   "name": "Toc Hop",
-  "id": "1430297693973378644",
+  "id": "1430767549212104336",
   "api": "1.0.0",
   "main": "dist/code.js",
   "capabilities": [],
@@ -14,4 +14,15 @@
       "none"
     ]
   }
+  ,
+  "menu": [
+    {
+      "name": "Generate for Current Page",
+      "command": "generate"
+    },
+    {
+      "name": "Generate for All Pages",
+      "command": "generate-file"
+    }
+  ]
 }
