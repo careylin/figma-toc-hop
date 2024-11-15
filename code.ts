@@ -51,7 +51,7 @@ async function generateTableOfContents(onlyGenerateForCurrentPage: boolean = fal
 	const font = await loadFont();
 
 	// Create main frame
-	const tocFrame = createBaseFrame("Table of Contents");
+	const tocFrame = createBaseFrame("🐰 Table of Contents 🐰");
 	tocFrame.paddingLeft = tocFrame.paddingRight = 40;
 	tocFrame.paddingTop = tocFrame.paddingBottom = 40;
 	tocFrame.itemSpacing = 40;
@@ -59,7 +59,14 @@ async function generateTableOfContents(onlyGenerateForCurrentPage: boolean = fal
 
 	// Add title and content
 	const divider = createDivider();
-	tocFrame.appendChild(createTextNode(figma.root.name, 32, MEDIUM_FONT, FILL_PRIMARY));
+	tocFrame.appendChild(createTextNode(
+		onlyGenerateForCurrentPage 
+			? `${figma.root.name} - ${figma.currentPage.name}`
+			: figma.root.name,
+		32,
+		MEDIUM_FONT,
+		FILL_PRIMARY
+	));
 	tocFrame.appendChild(divider);
 
 	const createPage = async (page: PageNode) => {
@@ -127,20 +134,68 @@ async function generateTableOfContents(onlyGenerateForCurrentPage: boolean = fal
 	return tocFrame;
 }
 
+async function updateTableOfContents(): Promise<FrameNode> {
+	// Find existing TOC frame
+	const tocFrame = figma.currentPage.findOne(
+		node => node.type === "FRAME" && node.name === "🐰 Table of Contents 🐰"
+	) as FrameNode;
+
+	if (!tocFrame) {
+		throw new Error("No existing Table of Contents found");
+	}
+
+	// Find the title text node (first text node in the frame)
+	const titleNode = tocFrame.findOne(
+		node => node.type === "TEXT"
+	) as TextNode;
+
+	// Check if title matches just the file name
+	const isFullToc = titleNode && 
+		titleNode.characters === figma.root.name;
+
+	// Store the original position
+	const originalX = tocFrame.x;
+	const originalY = tocFrame.y;
+
+	// Remove the old TOC
+	tocFrame.remove();
+
+	// Generate a new TOC with the same scope as before
+	const newTocFrame = await generateTableOfContents(!isFullToc);
+	
+	// Restore the original position
+	newTocFrame.x = originalX;
+	newTocFrame.y = originalY;
+
+	return newTocFrame;
+}
+
 async function main({ command }: { command: string }) {
 	const notification = figma.notify("Generating Table of Contents...", {
 		timeout: 10000,
 	});
 
 	try {
-		const tocFrame = await generateTableOfContents(command === "generate");
+		let tocFrame;
+		if (command === "update-toc") {
+			tocFrame = await updateTableOfContents();
+			figma.notify("Table of Contents updated!", { timeout: 2000 });
+		} else {
+			tocFrame = await generateTableOfContents(command === "generate");
+			figma.notify("Table of Contents created!", { timeout: 2000 });
+		}
+		
 		figma.viewport.scrollAndZoomIntoView([tocFrame]);
 		notification.cancel();
-		figma.notify("Table of Contents created!", { timeout: 2000 });
+		figma.currentPage.setRelaunchData({ 
+			"update-toc": 'Update the Table of Contents' 
+		});
 	} catch (error) {
-		figma.notify("Error creating Table of Contents", { error: true });
+		figma.notify("Error managing Table of Contents", { error: true });
 	} finally {
 		figma.closePlugin();
 	}
 }
 figma.on("run", main);
+
+
