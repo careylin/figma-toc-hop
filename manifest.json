@@ -23,6 +23,20 @@
     {
       "name": "Generate for All Pages",
       "command": "generate-file"
+    },
+    {
+      "separator": true
+    },
+    {
+      "name": "Update Table of Contents",
+      "command": "update-toc"
+    }
+  ],
+  "relaunchButtons": [
+    {
+      "name": "Update Table of Contents",
+      "command": "update-toc",
+      "multipleSelection": true
     }
   ]
 }
